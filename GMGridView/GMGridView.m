@@ -393,6 +393,7 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
 
 - (void)setLayoutStrategy:(id<GMGridViewLayoutStrategy>)layoutStrategy
 {
+    if (_layoutStrategy == layoutStrategy) return;
     _layoutStrategy = layoutStrategy;
     
     self.pagingEnabled = [[self.layoutStrategy class] requiresEnablingPaging];
@@ -401,18 +402,21 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
 
 - (void)setItemSpacing:(NSInteger)itemSpacing
 {
+    if (_itemSpacing == itemSpacing) return;
     _itemSpacing = itemSpacing;
     [self setNeedsLayout];
 }
 
 - (void)setCenterGrid:(BOOL)centerGrid
 {
+    if (_centerGrid == centerGrid) return;
     _centerGrid = centerGrid;
     [self setNeedsLayout];
 }
 
 - (void)setMinEdgeInsets:(UIEdgeInsets)minEdgeInsets
 {
+    if (UIEdgeInsetsEqualToEdgeInsets(_minEdgeInsets, minEdgeInsets)) return;
     _minEdgeInsets = minEdgeInsets;
     [self setNeedsLayout];
 }
