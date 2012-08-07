@@ -33,6 +33,7 @@
 #import "UIGestureRecognizer+GMGridViewAdditions.h"
 
 static const NSInteger kTagOffset = 50;
+static const NSInteger kTagMarkedForRemoval = kTagOffset-2;
 static const CGFloat kDefaultAnimationDuration = 0.3;
 static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOptionBeginFromCurrentState | UIViewAnimationOptionAllowUserInteraction;
 
@@ -106,6 +107,7 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
 // Helpers & more
 - (void)recomputeSizeAnimated:(BOOL)animated;
 - (void)relayoutItemsAnimated:(BOOL)animated;
+- (void)relayoutGridHeaderView:(BOOL)animated;
 - (NSArray *)itemSubviews;
 - (GMGridViewCell *)cellForItemAtIndex:(NSInteger)position;
 - (GMGridViewCell *)newItemSubViewForPosition:(NSInteger)position;
@@ -146,6 +148,8 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
 @synthesize editing = _editing;
 @synthesize enableEditOnLongPress;
 @synthesize disableEditOnEmptySpaceTap;
+
+@synthesize gridHeaderView = _gridHeaderView;
 
 @synthesize itemsSubviewsCacheIsValid = _itemsSubviewsCacheIsValid;
 @synthesize itemSubviewsCache;
@@ -291,6 +295,7 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
 {
     [self recomputeSizeAnimated:!(animation & GMGridViewItemAnimationNone)];
     [self relayoutItemsAnimated:animation & GMGridViewItemAnimationFade]; // only supported animation for now
+    [self relayoutGridHeaderView:!(animation & GMGridViewItemAnimationNone)];
     [self loadRequiredItems];
 }
 
@@ -476,6 +481,18 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
     }
 }
 
+
+
+- (void)setGridHeaderView:(UIView *)gridHeaderView
+{
+    if (_gridHeaderView == gridHeaderView) return;
+    
+    if (_gridHeaderView) [_gridHeaderView removeFromSuperview];
+    _gridHeaderView = gridHeaderView;
+    if (_gridHeaderView) [self addSubview:_gridHeaderView];
+
+    [self setNeedsLayout];
+}
 
 //////////////////////////////////////////////////////////////
 #pragma mark GestureRecognizer delegate
@@ -1269,10 +1286,23 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
 
 - (void)recomputeSizeAnimated:(BOOL)animated
 {
-    [self.layoutStrategy setupItemSize:_itemSize andItemSpacing:self.itemSpacing withMinEdgeInsets:self.minEdgeInsets andCenteredGrid:self.centerGrid];
+    UIEdgeInsets minEdgeInsets = self.minEdgeInsets;
+    if (self.gridHeaderView) {
+        minEdgeInsets.top += self.gridHeaderView.bounds.size.height;
+    }
+        
+    [self.layoutStrategy setupItemSize:_itemSize andItemSpacing:self.itemSpacing withMinEdgeInsets:minEdgeInsets andCenteredGrid:self.centerGrid];
     [self.layoutStrategy rebaseWithItemCount:_numberTotalItems insideOfBounds:self.bounds];
     
     CGSize contentSize = [self.layoutStrategy contentSize];
+    
+    if (self.gridHeaderView) {
+        CGFloat gridViewHeight = self.bounds.size.height;
+        CGFloat headerViewHeight = self.gridHeaderView.bounds.size.height;
+        if (gridViewHeight+headerViewHeight > contentSize.height) {
+            contentSize.height = gridViewHeight+headerViewHeight;
+        }
+    }
     
     _minPossibleContentOffset = CGPointMake(0, 0);
     _maxPossibleContentOffset = CGPointMake(contentSize.width - self.bounds.size.width + self.contentInset.right, 
@@ -1374,6 +1404,25 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
     
     return targetRect;
 }
+- (void)relayoutGridHeaderView:(BOOL)animated;
+{
+    CGRect frame = CGRectMake(0, 0, self.bounds.size.width, self.gridHeaderView.bounds.size.height);
+    if (animated) 
+    {
+        [UIView animateWithDuration:kDefaultAnimationDuration 
+                              delay:0
+                            options:kDefaultAnimationOptions
+                         animations:^{
+                             self.gridHeaderView.frame = frame;
+                         }
+                         completion:nil
+         ];
+    }
+    else 
+    {
+        self.gridHeaderView.frame = frame;
+    }
+}
 
 //////////////////////////////////////////////////////////////
 #pragma mark loading/destroying items & reusing cells
@@ -1421,7 +1470,7 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
         for (NSInteger i = self.firstPositionLoaded; i < (NSInteger)rangeOfPositions.location; i++) 
         {
             cell = [self cellForItemAtIndex:i];
-            if(cell)
+            if(cell && cell.tag != kTagMarkedForRemoval)
             {
                 [self queueReusableCell:cell];
                 [cell removeFromSuperview];
@@ -1437,7 +1486,7 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
         for (NSInteger i = NSMaxRange(rangeOfPositions); i <= self.lastPositionLoaded; i++)
         {
             cell = [self cellForItemAtIndex:i];
-            if(cell)
+            if(cell && cell.tag != kTagMarkedForRemoval)
             {
                 [self queueReusableCell:cell];
                 [cell removeFromSuperview];
@@ -1503,7 +1552,7 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
     
     [[self itemSubviews] enumerateObjectsUsingBlock:^(id obj, NSUInteger index, BOOL *stop)
     {
-        if ([obj isKindOfClass:[GMGridViewCell class]]) 
+        if ([obj isKindOfClass:[GMGridViewCell class]] && ((UIView *)obj).tag != kTagMarkedForRemoval) 
         {
             [(UIView *)obj removeFromSuperview];
             [self queueReusableCell:(GMGridViewCell *)obj];
@@ -1549,7 +1598,7 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
     cell.alpha = 0;
     [self addSubview:cell];
     
-    currentView.tag = kTagOffset - 1;
+    currentView.tag = kTagMarkedForRemoval;
     BOOL shouldScroll = animation & GMGridViewItemAnimationScroll;
     BOOL animate = animation & GMGridViewItemAnimationFade;
     [UIView animateWithDuration:animate ? kDefaultAnimationDuration : 0.f 
@@ -1563,7 +1612,9 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
                          cell.alpha = 1;
                      } 
                      completion:^(BOOL finished){
+                         currentView.tag = kTagOffset-1;
                          [currentView removeFromSuperview];
+                         [self queueReusableCell:(GMGridViewCell *)currentView];
                      }
      ];
     
@@ -1689,7 +1740,7 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
         oldView.tag = oldView.tag - 1;
     }
     
-    cell.tag = kTagOffset - 1;
+    cell.tag = kTagMarkedForRemoval;
     _numberTotalItems--;
     
     BOOL shouldScroll = animation & GMGridViewItemAnimationScroll;
@@ -1708,6 +1759,7 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
                      } 
                      completion:^(BOOL finished) {
                          cell.contentView.alpha = 1.f;
+                         cell.tag = kTagOffset - 1;
                          [self queueReusableCell:cell];
                          [cell removeFromSuperview];
                          
