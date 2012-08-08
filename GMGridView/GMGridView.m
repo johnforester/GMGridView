@@ -31,6 +31,7 @@
 #import "GMGridViewCell+Extended.h"
 #import "GMGridViewLayoutStrategies.h"
 #import "UIGestureRecognizer+GMGridViewAdditions.h"
+#import "VICrossGestureRecognizer.h"
 
 static const NSInteger kTagOffset = 50;
 static const NSInteger kTagMarkedForRemoval = kTagOffset-2;
@@ -53,6 +54,9 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
     UITapGestureRecognizer       *_tapGesture;
     UIRotationGestureRecognizer  *_rotationGesture;
     UIPanGestureRecognizer       *_panGesture;
+    
+    //VI gestures
+    VICrossGestureRecognizer    *_crossGestureRecognizer;
     
     // General vars
     NSInteger _numberTotalItems;
@@ -206,8 +210,8 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
     
     _panGesture = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(panGestureUpdated:)];
     _panGesture.delegate = self;
-    [_panGesture setMaximumNumberOfTouches:2];
-    [_panGesture setMinimumNumberOfTouches:2];
+    [_panGesture setMaximumNumberOfTouches:3];
+    [_panGesture setMinimumNumberOfTouches:3];
     [self addGestureRecognizer:_panGesture];
     
     //////////////////////
@@ -223,12 +227,22 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
     _longPressGesture.cancelsTouchesInView = NO;
     [self addGestureRecognizer:_longPressGesture];
     
+    
+    ////////////////////////
+    //VI Gestures
+    
+    _crossGestureRecognizer = [[VICrossGestureRecognizer alloc] initWithTarget:self action:@selector(crossGestureUpdated:) success:^{
+        [self crossGestureUpdated:_crossGestureRecognizer];
+    }];
+    _crossGestureRecognizer.delegate = self;
+    [self addGestureRecognizer:_crossGestureRecognizer];
+    
     ////////////////////////
     // Gesture dependencies
     UIPanGestureRecognizer *panGestureRecognizer = nil;
     if ([self respondsToSelector:@selector(panGestureRecognizer)]) // iOS5 only
     { 
-        panGestureRecognizer = self.panGestureRecognizer;
+     //   panGestureRecognizer = self.panGestureRecognizer;
     }
     else 
     {
@@ -500,6 +514,10 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
 
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer
 {
+    if (gestureRecognizer == _crossGestureRecognizer) {
+        return NO;
+    }
+    
     return YES;
 }
 
@@ -543,6 +561,10 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
         {
             valid = NO;
         }
+    }
+    else if (gestureRecognizer == _crossGestureRecognizer)
+    {
+        valid = YES;
     }
     
     return valid;
@@ -638,6 +660,14 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
     }
 }
 
+- (void)crossGestureUpdated:(VICrossGestureRecognizer *)crossGesture
+{
+    CGPoint locationTouch = [crossGesture locationInView:self];
+    NSInteger position = [self.layoutStrategy itemPositionFromLocation:locationTouch];
+    
+    [self removeObjectAtIndex:position animated:YES];
+}
+
 - (void)sortingAutoScrollMovementCheck
 {
     if (_sortMovingItem && _autoScrollActive) 
@@ -646,7 +676,6 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
         locationInMainView = CGPointMake(locationInMainView.x - self.contentOffset.x,
                                          locationInMainView.y -self.contentOffset.y
         );
-        
         
         CGFloat threshhold = _itemSize.height;
         CGPoint offset = self.contentOffset;
