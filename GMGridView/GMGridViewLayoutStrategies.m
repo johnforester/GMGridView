@@ -111,8 +111,9 @@
         _edgeInsets = self.minEdgeInsets;
     }
     
-    _contentSize = CGSizeMake(actualContentSize.width  + self.edgeInsets.left + self.edgeInsets.right, 
+    _contentSize = CGSizeMake(actualContentSize.width  + self.edgeInsets.left + self.edgeInsets.right,
                               actualContentSize.height + self.edgeInsets.top  + self.edgeInsets.bottom);
+
 }
 
 @end

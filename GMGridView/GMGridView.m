@@ -276,6 +276,18 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
     [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationWillChangeStatusBarOrientationNotification object:nil];
 }
 
+- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
+{
+    [super touchesBegan:touches withEvent:event];
+}
+
+
+- (BOOL)touchesShouldBegin:(NSSet *)touches withEvent:(UIEvent *)event inContentView:(UIView *)view
+{
+  
+    return YES;
+}
+
 //////////////////////////////////////////////////////////////
 #pragma mark Layout
 //////////////////////////////////////////////////////////////
@@ -515,6 +527,9 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
     
     if (gestureRecognizer == self.panGestureRecognizer) {
         DLog(@"pan gesture");
+        CGPoint locationTouch = [self.panGestureRecognizer locationInView:self];
+
+        /*  float touchSlope = (_currentTouchPoint.y - _startTouchPoint.y) / (_currentTouchPoint.x - _startTouchPoint.x);*/
     }
     
     if (gestureRecognizer == _tapGesture) 
