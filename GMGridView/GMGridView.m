@@ -513,6 +513,10 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
     BOOL valid = YES;
     BOOL isScrolling = self.isDragging || self.isDecelerating;
     
+    if (gestureRecognizer == self.panGestureRecognizer) {
+        DLog(@"pan gesture");
+    }
+    
     if (gestureRecognizer == _tapGesture) 
     {
         if (self.editing && self.disableEditOnEmptySpaceTap) {
