@@ -31,7 +31,6 @@
 #import "GMGridViewCell+Extended.h"
 #import "GMGridViewLayoutStrategies.h"
 #import "UIGestureRecognizer+GMGridViewAdditions.h"
-#import "VICrossGestureRecognizer.h"
 
 static const NSInteger kTagOffset = 50;
 static const NSInteger kTagMarkedForRemoval = kTagOffset-2;
@@ -54,10 +53,7 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
     UITapGestureRecognizer       *_tapGesture;
     UIRotationGestureRecognizer  *_rotationGesture;
     UIPanGestureRecognizer       *_panGesture;
-    
-    //VI gestures
-    VICrossGestureRecognizer    *_crossGestureRecognizer;
-    
+        
     // General vars
     NSInteger _numberTotalItems;
     CGSize    _itemSize;
@@ -226,16 +222,6 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
     _longPressGesture.delegate = self;
     _longPressGesture.cancelsTouchesInView = NO;
     [self addGestureRecognizer:_longPressGesture];
-    
-    
-    ////////////////////////
-    //VI Gestures
-    
-    _crossGestureRecognizer = [[VICrossGestureRecognizer alloc] initWithTarget:self action:@selector(crossGestureUpdated:) success:^{
-        [self crossGestureUpdated:_crossGestureRecognizer];
-    }];
-    _crossGestureRecognizer.delegate = self;
-    [self addGestureRecognizer:_crossGestureRecognizer];
     
     ////////////////////////
     // Gesture dependencies
@@ -479,6 +465,11 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
     }
 }
 
+- (NSInteger)itemPositionFromLocation:(CGPoint)location
+{
+    return [self.layoutStrategy itemPositionFromLocation:location];
+}
+
 //////////////////////////////////////////////////////////////
 #pragma mark UIScrollView delegate replacement
 //////////////////////////////////////////////////////////////
@@ -514,15 +505,11 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
 
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer
 {
-    if (gestureRecognizer == _crossGestureRecognizer) {
-        return NO;
-    }
-    
     return YES;
 }
 
 - (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer
-{    
+{
     BOOL valid = YES;
     BOOL isScrolling = self.isDragging || self.isDecelerating;
     
@@ -562,11 +549,7 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
             valid = NO;
         }
     }
-    else if (gestureRecognizer == _crossGestureRecognizer)
-    {
-        valid = YES;
-    }
-    
+
     return valid;
 }
 
@@ -658,14 +641,6 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
         default:
             break;
     }
-}
-
-- (void)crossGestureUpdated:(VICrossGestureRecognizer *)crossGesture
-{
-    CGPoint locationTouch = [crossGesture locationInView:self];
-    NSInteger position = [self.layoutStrategy itemPositionFromLocation:locationTouch];
-    
-    [self removeObjectAtIndex:position animated:YES];
 }
 
 - (void)sortingAutoScrollMovementCheck
