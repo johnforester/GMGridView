@@ -51,6 +51,7 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
     // Moving gestures
     UIPinchGestureRecognizer     *_pinchGesture;
     UITapGestureRecognizer       *_tapGesture;
+    UITapGestureRecognizer       *_doubleTapGesture;
     UIRotationGestureRecognizer  *_rotationGesture;
     UIPanGestureRecognizer       *_panGesture;
         
@@ -187,11 +188,18 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
 
 - (void)commonInit
 {
+    _doubleTapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(doubleTapGestureUpdated:)];
+    _doubleTapGesture.delegate = self;
+    _doubleTapGesture.numberOfTapsRequired = 2;
+    _doubleTapGesture.cancelsTouchesInView = NO;
+    [self addGestureRecognizer:_doubleTapGesture];
+    
     _tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapGestureUpdated:)];
     _tapGesture.delegate = self;
     _tapGesture.numberOfTapsRequired = 1;
     _tapGesture.numberOfTouchesRequired = 1;
     _tapGesture.cancelsTouchesInView = NO;
+    [_tapGesture requireGestureRecognizerToFail:_doubleTapGesture];
     [self addGestureRecognizer:_tapGesture];
     
     /////////////////////////////
@@ -1196,6 +1204,31 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
     }
     else
     { 
+        if([self.actionDelegate respondsToSelector:@selector(GMGridViewDidTapOnEmptySpace:)])
+        {
+            [self.actionDelegate GMGridViewDidTapOnEmptySpace:self];
+        }
+        
+        if (self.disableEditOnEmptySpaceTap) {
+            self.editing = NO;
+        }
+    }
+}
+
+- (void)doubleTapGestureUpdated:(UITapGestureRecognizer *)tapGesture
+{
+    CGPoint locationTouch = [_tapGesture locationInView:self];
+    NSInteger position = [self.layoutStrategy itemPositionFromLocation:locationTouch];
+    
+    if (position != GMGV_INVALID_POSITION)
+    {
+        if (!self.editing) {
+            [self cellForItemAtIndex:position].highlighted = NO;
+            [self.actionDelegate GMGridView:self didDoubleTapOnItemAtIndex:position];
+        }
+    }
+    else
+    {
         if([self.actionDelegate respondsToSelector:@selector(GMGridViewDidTapOnEmptySpace:)])
         {
             [self.actionDelegate GMGridViewDidTapOnEmptySpace:self];
