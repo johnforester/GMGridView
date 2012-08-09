@@ -257,7 +257,7 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
     self.editing = NO;
     self.itemSpacing = 10;
     self.style = GMGridViewStyleSwap;
-    self.minimumPressDuration = 0.2;
+    self.minimumPressDuration = 1;
     self.showFullSizeViewWithAlphaWhenTransforming = YES;
     self.minEdgeInsets = UIEdgeInsetsMake(5, 5, 5, 5);
     self.clipsToBounds = NO;
@@ -1460,12 +1460,13 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
     
     return targetRect;
 }
-- (void)relayoutGridHeaderView:(BOOL)animated;
+
+- (void)relayoutGridHeaderViewAnimated:(BOOL)animated atOrigin:(CGPoint)origin
 {
-    CGRect frame = CGRectMake(0, 0, self.bounds.size.width, self.gridHeaderView.bounds.size.height);
-    if (animated) 
+    CGRect frame = CGRectMake(origin.x, origin.y, self.bounds.size.width, self.gridHeaderView.bounds.size.height);
+    if (animated)
     {
-        [UIView animateWithDuration:kDefaultAnimationDuration 
+        [UIView animateWithDuration:kDefaultAnimationDuration
                               delay:0
                             options:kDefaultAnimationOptions
                          animations:^{
@@ -1474,10 +1475,15 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
                          completion:nil
          ];
     }
-    else 
+    else
     {
         self.gridHeaderView.frame = frame;
     }
+}
+
+- (void)relayoutGridHeaderView:(BOOL)animated
+{
+    [self relayoutGridHeaderViewAnimated:animated atOrigin:CGPointMake(0, 0)];
 }
 
 //////////////////////////////////////////////////////////////

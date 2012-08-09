@@ -111,6 +111,8 @@ typedef enum
 
 // Force the grid to update properties in an (probably) animated way.
 - (void)layoutSubviewsWithAnimation:(GMGridViewItemAnimation)animation;
+- (void)relayoutGridHeaderViewAnimated:(BOOL)animated atOrigin:(CGPoint)origin;
+- (void)relayoutGridHeaderView:(BOOL)animated;
 
 - (NSInteger)itemPositionFromLocation:(CGPoint)location;
 
