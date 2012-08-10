@@ -206,7 +206,7 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
     // Transformation gestures :
     _pinchGesture = [[UIPinchGestureRecognizer alloc] initWithTarget:self action:@selector(pinchGestureUpdated:)];
     _pinchGesture.delegate = self;
-    [self addGestureRecognizer:_pinchGesture];
+ //   [self addGestureRecognizer:_pinchGesture];
     
     _rotationGesture = [[UIRotationGestureRecognizer alloc] initWithTarget:self action:@selector(rotationGestureUpdated:)];
     _rotationGesture.delegate = self;
