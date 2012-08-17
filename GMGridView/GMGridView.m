@@ -534,7 +534,6 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
     BOOL isScrolling = self.isDragging || self.isDecelerating;
     
     if (gestureRecognizer == self.panGestureRecognizer) {
-        DLog(@"pan gesture");
         CGPoint locationTouch = [self.panGestureRecognizer locationInView:self];
 
         /*  float touchSlope = (_currentTouchPoint.y - _startTouchPoint.y) / (_currentTouchPoint.x - _startTouchPoint.x);*/
