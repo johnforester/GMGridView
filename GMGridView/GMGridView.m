@@ -490,6 +490,11 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
     return [self.layoutStrategy itemPositionFromLocation:location];
 }
 
+- (BOOL)isSorting
+{
+    return _sortMovingItem != nil;
+}
+
 //////////////////////////////////////////////////////////////
 #pragma mark UIScrollView delegate replacement
 //////////////////////////////////////////////////////////////
@@ -535,8 +540,6 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
     
     if (gestureRecognizer == self.panGestureRecognizer) {
         CGPoint locationTouch = [self.panGestureRecognizer locationInView:self];
-        
-        /*  float touchSlope = (_currentTouchPoint.y - _startTouchPoint.y) / (_currentTouchPoint.x - _startTouchPoint.x);*/
     }
     
     if (gestureRecognizer == _tapGesture)
@@ -1524,7 +1527,8 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
 
 - (void)loadRequiredItems
 {
-    NSRange rangeOfPositions = [self.layoutStrategy rangeOfPositionsInBoundsFromOffset: self.contentOffset];
+    NSRange rangeOfPositions = [self.layoutStrategy rangeOfPositionsInBoundsFromOffset:
+                                CGPointMake(self.contentOffset.x, self.contentOffset.y - self.gridHeaderView.frame.size.height) ];
     NSRange loadedPositionsRange = NSMakeRange(self.firstPositionLoaded, self.lastPositionLoaded - self.firstPositionLoaded);
     
     // calculate new position range
@@ -1561,7 +1565,8 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
 
 - (void)cleanupUnseenItems
 {
-    NSRange rangeOfPositions = [self.layoutStrategy rangeOfPositionsInBoundsFromOffset: self.contentOffset];
+    NSRange rangeOfPositions = [self.layoutStrategy rangeOfPositionsInBoundsFromOffset:
+                                CGPointMake(self.contentOffset.x, self.contentOffset.y - self.gridHeaderView.frame.size.height)];
     GMGridViewCell *cell;
     
     if ((NSInteger)rangeOfPositions.location > self.firstPositionLoaded)

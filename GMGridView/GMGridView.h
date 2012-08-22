@@ -116,6 +116,8 @@ typedef enum
 
 - (NSInteger)itemPositionFromLocation:(CGPoint)location;
 
+- (BOOL)isSorting;
+
 @end
 
 
