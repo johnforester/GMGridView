@@ -654,7 +654,7 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
             _autoScrollActive = YES;
             [self sortingAutoScrollMovementCheck];
             
-            if ([panGesture locationInView:self.superview].y >= 300 || [panGesture locationInView:self.superview].y <= 20) {
+            if ([panGesture locationInView:self.superview].y >= self.frame.size.height - 100 || [panGesture locationInView:self.superview].y <= 100) {
                 self.scrollEnabled = YES;
             } else {
                 self.scrollEnabled = NO;
@@ -666,7 +666,7 @@ static const UIViewAnimationOptions kDefaultAnimationOptions = UIViewAnimationOp
         {
             _autoScrollActive = YES;
             
-            if ([panGesture locationInView:self].y >= 300 || [panGesture locationInView:self].y <= 20) {
+            if ([panGesture locationInView:self].y >= self.frame.size.height - 100 || [panGesture locationInView:self].y <= 100) {
                 self.scrollEnabled = YES;
             } else {
                 self.scrollEnabled = NO;
